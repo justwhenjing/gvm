@@ -56,7 +56,7 @@ test: ## Run go test (add VERBOSE=1 for -v)
 	@$(eval VERBOSE_FLAG = $(if $(filter 1,$(VERBOSE)),-v,))
 	@go test -gcflags=all=-l $$(go list ./... | grep -v /e2e) -covermode=count -coverprofile=$(TEST_DIR)/cover.out $(VERBOSE_FLAG)
 	@$(eval MODULE_DIR = $(shell basename $(WORK_DIR)))
-	@gocover diff --cover-profile=$(TEST_DIR)/cover.out -o=$(TEST_DIR) --baseline=0.0 $(VERBOSE_FLAG)
+	@gocover diff --cover-profile=$(TEST_DIR)/cover.out -o=$(TEST_DIR)/test --baseline=0.0 $(VERBOSE_FLAG)
 
 .PHONY: clean
 clean: ## Clean up the project.
