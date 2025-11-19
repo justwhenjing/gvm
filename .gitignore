@@ -1,24 +1,11 @@
-# Binaries for programs and plugins
-*.dll
-*.so
-*.dylib
+# Dependency directories (remove the comment below to include it)
+vendor/
 
-# Test binary, build with `go test -c`
-*.test
+# Output Dir
+target
 
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
-# diskcache directory
-cache/*
-vendor/*
-
-tmp/
-
-.env
-*.pid
-dist/
-bin/
-build/
-gobrew
-coverage.xml
-main
+# Editor/IDE
+.idea/
+.vscode/
+.cursorindexingignore
+.specstory/

@@ -1,0 +1,51 @@
+version: "2"
+
+run:
+  timeout: 5m
+  allow-parallel-runners: true
+
+linters:
+  default: none
+  enable:
+    - bodyclose
+    - copyloopvar
+    - dogsled
+    - dupl
+    - errcheck
+    - gocheckcompilerdirectives
+    - copyloopvar
+    - ginkgolinter
+    - goconst
+    - gocyclo
+    - goprintffuncname
+    #- gosec
+    - govet
+    - intrange
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - noctx
+    - nolintlint
+    - staticcheck
+    - testifylint
+    - unconvert
+    - unparam
+    - unused
+    - whitespace
+  exclusions:
+    rules:
+      - path: api
+        linters:
+          - lll
+      - path: internal
+        linters:
+          - dupl
+          - lll
+  settings:
+    goesc:
+      excludes:
+        - G101
+        - G301
+        - G304
+        - G306
