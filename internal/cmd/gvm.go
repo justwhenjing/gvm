@@ -59,6 +59,9 @@ func NewRootCmd() (*cobra.Command, error) {
 
 	cmd.AddCommand(
 		NewListCmd(logger, c),
+		NewInstallCmd(logger, c),
+		NewUninstallCmd(logger, c),
+		NewUseCmd(logger, c),
 		NewVersionCmd(),
 	)
 

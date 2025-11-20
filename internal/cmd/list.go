@@ -29,7 +29,7 @@ func NewListCmd(logger log.ILog, c *config.Config) *cobra.Command {
 			}
 
 			r := runtime.NewRuntime(logger, c)
-			if err := r.ListVersions(filter); err != nil {
+			if err := r.List(filter); err != nil {
 				return err
 			}
 

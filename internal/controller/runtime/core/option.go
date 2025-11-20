@@ -6,6 +6,7 @@ import "time"
 type Option struct {
 	cacheFile string        // 缓存文件
 	ttl       time.Duration // 缓存过期时间
+	verbose   bool          // 是否显示详细信息
 }
 
 func (o *Option) Apply(opts []OptionFunc) {

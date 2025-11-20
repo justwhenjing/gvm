@@ -1,6 +1,8 @@
 package httpcli
 
-import "github.com/go-resty/resty/v2"
+import (
+	"github.com/go-resty/resty/v2"
+)
 
 type Client struct {
 	o *Option
@@ -12,8 +14,16 @@ func NewClient(opts ...OptionFunc) *Client {
 	return &Client{o: o}
 }
 
+func (c *Client) Head(url string) (*resty.Response, error) {
+	return c.o.client.R().Head(url)
+}
+
 func (c *Client) Get(url string, query map[string]string) (*resty.Response, error) {
 	return c.o.client.R().SetQueryParams(query).Get(url)
+}
+
+func (c *Client) GetWithOutput(url string, output string) (*resty.Response, error) {
+	return c.o.client.R().SetOutput(output).Get(url)
 }
 
 func (c *Client) Post(url string, body interface{}) (*resty.Response, error) {

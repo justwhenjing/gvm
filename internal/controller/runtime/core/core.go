@@ -1,15 +1,21 @@
 package core
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/Masterminds/semver"
+	"github.com/schollz/progressbar/v3"
 
 	"github.com/justwhenjing/gvm/internal/controller/config"
+	"github.com/justwhenjing/gvm/internal/util/httpcli"
 	"github.com/justwhenjing/gvm/internal/util/log"
 )
 
@@ -27,6 +33,7 @@ func NewCore(logger log.ILog, conf *config.Config, opts ...OptionFunc) ICore {
 	o := &Option{
 		cacheFile: filepath.Join(conf.RootDir, "cache.json"),
 		ttl:       conf.CacheTTL,
+		verbose:   conf.Verbose,
 	}
 	o.Apply(opts)
 
@@ -41,7 +48,7 @@ func (c *Core) ParseVersion(version string) (*semver.Version, error) {
 		return nil, fmt.Errorf("no version provided")
 	}
 
-	semverVersion, err := semver.NewVersion(formatVersion(version))
+	semverVersion, err := semver.NewVersion(FormatVersion(version))
 	if err != nil {
 		return nil, fmt.Errorf("parse version %s failed: %w", version, err)
 	}
@@ -56,7 +63,7 @@ func (c *Core) SortVersions(versions []string) ([]string, error) {
 
 	// 分解beta/rc版本和语义化版本
 	for _, version := range versions {
-		if isBetaOrRC(version) {
+		if IsBetaOrRC(version) {
 			rcBetaVersions = append(rcBetaVersions, version)
 		} else {
 			// 解析为语义化版本
@@ -85,8 +92,8 @@ func (c *Core) SortVersions(versions []string) ([]string, error) {
 	return result, nil
 }
 
-// formatVersion 格式化版本号
-func formatVersion(version string) string {
+// FormatVersion 格式化版本号
+func FormatVersion(version string) string {
 	// Remove @latest and @dev-latest suffixes
 	version = strings.TrimSuffix(version, "@latest")
 	version = strings.TrimSuffix(version, "@dev-latest")
@@ -97,9 +104,61 @@ func formatVersion(version string) string {
 	return version
 }
 
-// isBetaOrRC 判断是否是beta或rc版本
-func isBetaOrRC(version string) bool {
+// IsBetaOrRC 判断是否是beta或rc版本
+func IsBetaOrRC(version string) bool {
+	return len(MatchBetaOrRC(version)) > 0
+}
+
+// MatchBetaOrRC 匹配beta或rc版本
+func MatchBetaOrRC(version string) []string {
 	re := regexp.MustCompile("beta.*|rc.*")
-	matches := re.FindAllString(version, -1)
-	return len(matches) > 0
+	return re.FindAllString(version, -1)
+}
+
+// NotSupportedVersion 不支持的版本
+func NotSupportedVersion(version string) bool {
+	blackListVersions := []string{"1.0", "1.1", "1.2", "1.3", "1.4"}
+	for _, v := range blackListVersions {
+		if version == v {
+			return true
+		}
+	}
+	return false
+}
+
+// DownloadVersion 下载版本
+func DownloadVersion(url string, tarName string, destFolder string) error {
+	if err := os.MkdirAll(destFolder, 0755); err != nil {
+		return err
+	}
+
+	client := httpcli.NewClient()
+	response, err := client.Get(url, nil)
+	if err != nil {
+		return err
+	}
+	if response.StatusCode() != http.StatusOK {
+		return fmt.Errorf("download version failed, status code: %d", response.StatusCode())
+	}
+
+	dest := filepath.Join(destFolder, tarName)
+	fObj, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = fObj.Close()
+	}()
+
+	bar := progressbar.DefaultBytes(
+		response.Size(),
+		"Downloading",
+	)
+
+	_, err = io.Copy(io.MultiWriter(fObj, bar), bytes.NewReader(response.Body()))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

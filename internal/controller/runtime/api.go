@@ -1,5 +1,8 @@
 package runtime
 
 type IRuntime interface {
-	ListVersions(filter string) error
+	List(filter string) error
+	Use(version string) error
+	Install(version string) error
+	Uninstall(version string) error
 }

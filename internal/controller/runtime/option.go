@@ -6,6 +6,7 @@ type Option struct {
 	currentGoDir  string // 当前版本go目录
 	versionsDir   string // 版本目录
 	downloadsDir  string // 下载目录
+	repoURL       string // 版本仓库URL
 	tagURL        string // 版本标签URL
 	verbose       bool   // 是否显示详细信息
 	remote        bool   // 是否显示远程版本信息
