@@ -37,14 +37,17 @@ func NewRootCmd() (*cobra.Command, error) {
 				return nil
 			}
 
+			// 配置回填
 			if err := c.BackFill(); err != nil {
 				return err
 			}
 
+			// 配置检查
 			if err := c.Validate(); err != nil {
 				return err
 			}
 
+			// 日志级别设置
 			if c.Verbose {
 				if err := logger.SetLevel(log.LevelDebug); err != nil {
 					return err
@@ -66,7 +69,7 @@ func NewRootCmd() (*cobra.Command, error) {
 	)
 
 	// 设置选项
-	cmd.PersistentFlags().StringVarP(&c.RootDir, "root", "", os.Getenv("GVM_ROOT"), "gvm root directory")
+	cmd.PersistentFlags().StringVarP(&c.RootDir, "root", "", os.Getenv("GVM_HOME"), "gvm root directory")
 	cmd.PersistentFlags().StringVarP(&c.Repo, "repo", "", config.DefaultRepo, "gvm version repository")
 	cmd.PersistentFlags().BoolVarP(&c.Verbose, "verbose", "v", false, "if show details")
 

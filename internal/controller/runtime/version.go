@@ -18,15 +18,15 @@ import (
 // CurrentVersion 查看当前版本
 func (r *Runtime) CurrentVersion() string {
 	// 查看软连接实际目录
-	fp, err := os.Readlink(r.o.currentBinDir)
+	fp, err := os.Readlink(r.o.currentDir)
 	if err != nil {
-		r.logger.Debug("eval symlinks failed", "error", err)
+		r.logger.Debug("read link failed", "error", err)
 		return core.NoneVersion
 	}
 	r.logger.Debug("current version", "actual_path", fp)
 
-	// 去除go/bin后缀,对应的父目录名即为版本名
-	version := strings.TrimSuffix(fp, filepath.Join("go", "bin"))
+	// 去除go后缀的目录名即为版本号
+	version := strings.TrimSuffix(fp, "go")
 	version = filepath.Base(version)
 	if version == "." {
 		return core.NoneVersion

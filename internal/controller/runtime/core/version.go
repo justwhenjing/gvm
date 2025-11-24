@@ -33,9 +33,7 @@ func (c *Core) Download(repo string, version string, destFolder string) (string,
 		httpcli.WithDebug(c.o.verbose),
 	)
 
-	// 3) 配置进度条
-	done := make(chan bool)
-
+	// 3) 查看文件大小
 	headResp, err := client.Head(downloadURL)
 	if err != nil {
 		return "", err
@@ -45,30 +43,29 @@ func (c *Core) Download(repo string, version string, destFolder string) (string,
 	if contentLength != "" {
 		total, _ = strconv.ParseInt(contentLength, 10, 64)
 	}
+	c.logger.Debug("file size", "total", total)
 
+	// 4) 配置进度条
 	bar := progressbar.DefaultBytes(total, "Downloading")
-	go func() {
-		ticker := time.NewTicker(100 * time.Millisecond)
-		defer ticker.Stop()
+	defer func() { _ = bar.Close() }()
 
+	done := make(chan struct{})
+	ticker := time.NewTicker(200 * time.Millisecond) // 每200ms检查一次
+	defer ticker.Stop()
+
+	go func() {
 		for {
 			select {
-			case <-ticker.C:
-				info, err := os.Stat(dest)
-				if err == nil {
-					current := info.Size()
-					_ = bar.Set64(current)
-				}
 			case <-done:
-				// 设置最终进度为 100%
-				if total > 0 {
-					_ = bar.Set64(total)
-				}
 				return
+			case <-ticker.C:
+				current := currentSize(dest)
+				_ = bar.Set64(current)
 			}
 		}
 	}()
 
+	// 5) 下载文件
 	resp, err := client.GetWithOutput(downloadURL, dest)
 	if err != nil {
 		close(done)
@@ -81,9 +78,6 @@ func (c *Core) Download(repo string, version string, destFolder string) (string,
 	}
 
 	close(done)
-	// 等待完成
-	time.Sleep(300 * time.Millisecond)
-
 	c.logger.Info("download completed")
 	return dest, nil
 }
@@ -109,4 +103,12 @@ func (c *Core) Extract(src string, dst string) error {
 // fullName 完整的文件名
 func fullName(version string) string {
 	return fmt.Sprintf("go%s.%s-%s%s", version, runtime.GOOS, runtime.GOARCH, TarExt)
+}
+
+func currentSize(path string) int64 {
+	info, err := os.Stat(path)
+	if err != nil {
+		return 0
+	}
+	return info.Size()
 }

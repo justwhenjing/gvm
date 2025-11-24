@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,15 +20,14 @@ type Runtime struct {
 
 func NewRuntime(logger log.ILog, c *config.Config, opts ...OptionFunc) IRuntime {
 	o := &Option{
-		currentDir:    filepath.Join(c.RootDir, "current"),
-		currentBinDir: filepath.Join(c.RootDir, "current", "bin"),
-		currentGoDir:  filepath.Join(c.RootDir, "current", "go"),
-		versionsDir:   filepath.Join(c.RootDir, "versions"),
-		downloadsDir:  filepath.Join(c.RootDir, "downloads"),
-		repoURL:       c.Repo,
-		tagURL:        c.TagURL,
-		verbose:       c.Verbose,
-		remote:        c.Remote,
+		currentDir:   filepath.Join(c.RootDir, "current"),
+		versionsDir:  filepath.Join(c.RootDir, "versions"),
+		downloadsDir: filepath.Join(c.RootDir, "downloads"),
+		goPathDir:    filepath.Join(c.RootDir, "workspace"),
+		repoURL:      c.Repo,
+		tagURL:       c.TagURL,
+		verbose:      c.Verbose,
+		remote:       c.Remote,
 	}
 	o.Apply(opts)
 
@@ -45,24 +45,24 @@ func (r *Runtime) Use(version string) error {
 		return nil
 	}
 
-	// 设置go目录软链接
-	_ = os.RemoveAll(r.o.currentGoDir)
+	// 设置当前版本软链接
+	_ = os.RemoveAll(r.o.currentDir)
 	goDir := filepath.Join(r.o.versionsDir, version, "go")
-	if err := os.MkdirAll(filepath.Dir(r.o.currentGoDir), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(r.o.currentDir), 0755); err != nil {
 		return err
 	}
-	if err := os.Symlink(goDir, r.o.currentGoDir); err != nil {
+	if err := os.Symlink(goDir, r.o.currentDir); err != nil {
 		return err
 	}
 
-	// 设置bin目录软链接
-	_ = os.RemoveAll(r.o.currentBinDir)
-	binDir := filepath.Join(r.o.versionsDir, version, "go", "bin")
-	if err := os.MkdirAll(filepath.Dir(r.o.currentBinDir), 0755); err != nil {
+	// 创建GOPATH目录
+	if err := os.MkdirAll(r.o.goPathDir, 0755); err != nil {
 		return err
 	}
-	if err := os.Symlink(binDir, r.o.currentBinDir); err != nil {
-		return err
+
+	// 判断环境变量
+	if err := r.CheckEnv(); err != nil {
+		r.logger.Warn("check env failed", "error", err)
 	}
 
 	r.logger.Info("using", "version", version)
@@ -91,6 +91,7 @@ func (r *Runtime) Install(version string) error {
 	}
 
 	// 下载版本
+	_ = os.RemoveAll(r.o.downloadsDir)
 	defer func() {
 		_ = os.RemoveAll(r.o.downloadsDir)
 	}()
@@ -197,6 +198,33 @@ func (r *Runtime) List(filter string) error {
 
 	if cv != "" {
 		r.logger.Info("current", "version", cv)
+	}
+
+	return nil
+}
+
+// CheckEnv 检查环境变量
+func (r *Runtime) CheckEnv() error {
+	if os.Getenv("PATH") == "" {
+		return fmt.Errorf("PATH not set, please check")
+	}
+
+	// 检查GOROOT环境变量
+	if os.Getenv("GOROOT") != r.o.currentDir {
+		return fmt.Errorf("GOROOT set wrong, please set %s as GOROOT", r.o.currentDir)
+	}
+	binDir := filepath.Join(r.o.currentDir, "bin")
+	if !strings.Contains(os.Getenv("PATH"), binDir) {
+		return fmt.Errorf("PATH set wrong, please add %s to PATH", binDir)
+	}
+
+	// 检查GOPATH环境变量
+	if os.Getenv("GOPATH") != r.o.goPathDir {
+		return fmt.Errorf("GOPATH set wrong, please set %s as GOPATH", r.o.goPathDir)
+	}
+	binDir = filepath.Join(r.o.goPathDir, "bin")
+	if !strings.Contains(os.Getenv("PATH"), binDir) {
+		return fmt.Errorf("PATH set wrong, please add %s to PATH", binDir)
 	}
 
 	return nil
