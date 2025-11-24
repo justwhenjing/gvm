@@ -25,6 +25,7 @@ type Config struct {
 	Verbose    bool          `json:"verbose" validate:"omitempty"`     // 是否显示详细信息
 	Remote     bool          `json:"remote" validate:"omitempty"`      // 是否显示远程版本信息
 	ClearCache bool          `json:"clear_cache" validate:"omitempty"` // 是否清理缓存
+	Prune      bool          `json:"all" validate:"omitempty"`         // 是否清理所有版本
 	CacheTTL   time.Duration `json:"cache_ttl" validate:"omitempty"`   // 缓存过期时间
 }
 

@@ -15,19 +15,18 @@ func NewUninstallCmd(logger log.ILog, c *config.Config) *cobra.Command {
 		Use:  "uninstall [version]",
 		Long: "uninstall spec go version",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			r := runtime.NewRuntime(logger, c)
+			if c.Prune {
+				return r.Prune()
+			}
+
 			if len(args) < 1 {
 				return fmt.Errorf("version is required")
 			}
-			version := args[0]
-
-			r := runtime.NewRuntime(logger, c)
-			if err := r.Uninstall(version); err != nil {
-				return err
-			}
-
-			return nil
+			return r.Uninstall(args[0])
 		},
 	}
 
+	cmd.PersistentFlags().BoolVarP(&c.Prune, "prune", "", false, "if prune all versions")
 	return cmd
 }

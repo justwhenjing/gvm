@@ -118,6 +118,39 @@ func (r *Runtime) Install(version string) error {
 
 // Uninstall 卸载指定版本
 func (r *Runtime) Uninstall(version string) error {
+	if version == "" {
+		return fmt.Errorf("version is required")
+	}
+
+	if r.CurrentVersion() == version {
+		return fmt.Errorf("cannot uninstall current version")
+	}
+
+	// 清理versions目录
+	r.logger.Info("uninstalling", "version", version)
+
+	versionDir := filepath.Join(r.o.versionsDir, version)
+	_ = os.RemoveAll(versionDir)
+
+	r.logger.Info("uninstall completed")
+	return nil
+}
+
+// Prune 清理所有版本
+func (r *Runtime) Prune() error {
+	entries, err := os.ReadDir(r.o.versionsDir)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		r.logger.Info("pruning", "version", entry.Name())
+		if r.CurrentVersion() == entry.Name() {
+			_ = os.RemoveAll(r.o.currentDir)
+		}
+		_ = os.RemoveAll(filepath.Join(r.o.versionsDir, entry.Name()))
+	}
+
+	r.logger.Info("prune completed")
 	return nil
 }
 

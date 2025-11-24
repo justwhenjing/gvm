@@ -5,4 +5,5 @@ type IRuntime interface {
 	Use(version string) error
 	Install(version string) error
 	Uninstall(version string) error
+	Prune() error
 }
