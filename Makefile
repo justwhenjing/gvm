@@ -69,7 +69,7 @@ clean: ## Clean up the project.
 #################
 ### 编译信息
 VERSION ?= V0.0.1
-PLATFORMS ?= linux/amd64 windows/386
+PLATFORMS ?= linux/amd64 windows/386 windows/amd64
 COMMIT := $(shell git rev-parse --short HEAD)
 LDFLAGS = '-w -X $(MOD_NAME)/internal/cmd.Release=$(VERSION) -X $(MOD_NAME)/internal/cmd.Commit=$(COMMIT)'
 
@@ -81,8 +81,10 @@ $(PLATFORMS):
 	@$(eval BUILD_ARCH = $(word 2, $(DISTTYPE)))
 	@echo Building for $(BUILD_GOOS) platform, arch is $(BUILD_ARCH)...
 	@mkdir -p $(DIST_DIR)
-	@GOOS=$(BUILD_GOOS) GOARCH=$(BUILD_ARCH) GO111MODULE=on CGO_ENABLED=0 go build -trimpath -mod vendor \
--ldflags $(LDFLAGS) -o $(DIST_DIR) ./cmd/...
+	@outbin="$(DIST_DIR)/gvm-$(BUILD_GOOS)-$(BUILD_ARCH)"; \
+	if [ "$(BUILD_GOOS)" = "windows" ]; then outbin="$$outbin.exe"; fi; \
+	GOOS=$(BUILD_GOOS) GOARCH=$(BUILD_ARCH) GO111MODULE=on CGO_ENABLED=0 go build -trimpath -mod vendor -ldflags $(LDFLAGS) \
+-o $$outbin ./cmd/gvm
 
 
 #################

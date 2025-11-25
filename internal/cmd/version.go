@@ -14,6 +14,7 @@ var (
 	date    = time.Now().Format(time.DateTime)
 )
 
+// TODO 目前gvm版本需要和运行环境适配
 func NewVersionCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "version",
