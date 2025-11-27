@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/justwhenjing/gokit/infra/log"
 	"github.com/justwhenjing/gvm/internal/controller/config"
 	"github.com/justwhenjing/gvm/internal/controller/runtime"
-	"github.com/justwhenjing/gvm/internal/util/log"
 )
 
 func NewUseCmd(logger log.ILog, c *config.Config) *cobra.Command {

@@ -6,9 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/justwhenjing/gokit/infra/log"
+
 	"github.com/justwhenjing/gvm/internal/controller/config"
 	"github.com/justwhenjing/gvm/internal/controller/runtime/core"
-	"github.com/justwhenjing/gvm/internal/util/log"
 )
 
 type Runtime struct {
@@ -33,7 +34,7 @@ func NewRuntime(logger log.ILog, c *config.Config, opts ...OptionFunc) IRuntime 
 
 	return &Runtime{
 		logger: logger,
-		core:   core.NewCore(logger.With("runtime", "core"), c),
+		core:   core.NewCore(logger, c),
 		o:      o,
 	}
 }
@@ -187,12 +188,15 @@ func (r *Runtime) List(filter string) error {
 
 		for _, key := range keys {
 			if filter == "" {
-				r.logger.Info(key, "versions", group[key])
+				fmt.Println("group: ", key)
+				fmt.Println("versions: ", strings.Join(group[key], ", "))
 				continue
 			}
 
+			// 列举特定版本
 			if strings.Contains(filter, key) {
-				r.logger.Info(key, "versions", group[key])
+				fmt.Println("group: ", key)
+				fmt.Println("versions: ", strings.Join(group[key], ", "))
 			}
 		}
 		return nil
@@ -222,12 +226,11 @@ func (r *Runtime) List(filter string) error {
 
 	for _, version := range sortedVersions {
 		if version == cv {
-			r.logger.Info(version + " *")
+			fmt.Println(version + " *")
 		} else {
-			r.logger.Info(version)
+			fmt.Println(version)
 		}
 	}
-	r.logger.Info("")
 
 	if cv != "" {
 		r.logger.Info("current", "version", cv)

@@ -1,22 +1,16 @@
 package core
 
 import (
-	"bytes"
 	"fmt"
-	"io"
-	"net/http"
-	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/Masterminds/semver"
-	"github.com/schollz/progressbar/v3"
 
+	"github.com/justwhenjing/gokit/infra/log"
 	"github.com/justwhenjing/gvm/internal/controller/config"
-	"github.com/justwhenjing/gvm/internal/util/httpcli"
-	"github.com/justwhenjing/gvm/internal/util/log"
 )
 
 const (
@@ -124,41 +118,4 @@ func NotSupportedVersion(version string) bool {
 		}
 	}
 	return false
-}
-
-// DownloadVersion 下载版本
-func DownloadVersion(url string, tarName string, destFolder string) error {
-	if err := os.MkdirAll(destFolder, 0755); err != nil {
-		return err
-	}
-
-	client := httpcli.NewClient()
-	response, err := client.Get(url, nil)
-	if err != nil {
-		return err
-	}
-	if response.StatusCode() != http.StatusOK {
-		return fmt.Errorf("download version failed, status code: %d", response.StatusCode())
-	}
-
-	dest := filepath.Join(destFolder, tarName)
-	fObj, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY, 0o644)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = fObj.Close()
-	}()
-
-	bar := progressbar.DefaultBytes(
-		response.Size(),
-		"Downloading",
-	)
-
-	_, err = io.Copy(io.MultiWriter(fObj, bar), bytes.NewReader(response.Body()))
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

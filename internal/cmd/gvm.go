@@ -3,19 +3,17 @@ package cmd
 import (
 	"os"
 
+	"github.com/justwhenjing/gokit/infra/log"
 	"github.com/spf13/cobra"
 
 	"github.com/justwhenjing/gvm/internal/controller/config"
-	"github.com/justwhenjing/gvm/internal/util/log"
 )
 
 func NewRootCmd() (*cobra.Command, error) {
 	// 初始化logger(默认使用info)
 	logger, err := log.NewLogger(
-		os.Stdout,
-		log.WithFormat(log.FormatCustom),
-		log.WithShowLevel(true),
-		log.WithColorful(false),
+		log.WithFormat(log.FormatJSON),
+		log.WithRemoveTime(true),
 	)
 	if err != nil {
 		return nil, err
